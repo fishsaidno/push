@@ -2,5 +2,5 @@
 /node_modules/
 .idea
 .build*
-
 .npm/
+.DS_Store
