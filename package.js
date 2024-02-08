@@ -3,19 +3,20 @@ Package.describe({
   version: '0.0.0-semantic-release',
   summary: 'Isomorphic Push notifications for APN and GCM',
   git: 'https://github.com/raix/push.git',
-  deprecated: true
+  // deprecated: true
 });
 
 // Server-side push deps
 Npm.depends({
   'apn' : '1.6.2', // '1.7.4', // working: 1.6.2
   'node-gcm' : '0.14.4', // previously: 0.9.6
-  'firebase-admin': '6.1.0'
+  'firebase-admin': '12.0.0' // previously 6.1.0
 });
 
 Cordova.depends({
-  'phonegap-plugin-push': '2.1.3',  // previously 1.9.0
-  'cordova-plugin-device': '2.0.2' // previously 1.1.3
+  // 'phonegap-plugin-push': '2.2.3',  // previously 1.9.0
+  '@havesource/cordova-plugin-push': '4.0.0',
+  'cordova-plugin-device': '2.1.0' // previously 2.0.2
 });
 
 Package.registerBuildPlugin({
@@ -32,7 +33,8 @@ Package.registerBuildPlugin({
 });
 
 Package.onUse(function(api) {
-  api.versionsFrom('1.2');
+  // api.versionsFrom('1.2');
+  api.versionsFrom('2.14'); // Meteor 2.14 required for compatibility with Cordova dependencies
   api.use(['ecmascript']);
 
 
@@ -46,7 +48,7 @@ Package.onUse(function(api) {
   ], ['client', 'server'], { weak: true });
 
   api.use([
-    'raix:eventstate@0.0.2',
+    'raix:eventstate@0.0.5',
     'check',
     'mongo',
     'underscore',
