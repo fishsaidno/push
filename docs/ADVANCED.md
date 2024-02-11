@@ -47,6 +47,11 @@ Client:
     });
 ```
 
+**iOS Background Handling of Notifications:**
+If you want your Push event handlers to be called when your app is in the background (before the user clicks the notification),  
+have a read of https://github.com/havesource/cordova-plugin-push/blob/master/docs/PAYLOAD.md#background-notifications-1
+To call the finish function use `Push.push.finish()`  
+
 The returned `notification` object from events:
 ```js
 var notification = {    
@@ -117,7 +122,10 @@ If you want to use the Push.Configure on the client use the options described [h
             certData: Assets.getText('apnProdCert.pem'),
             keyData: Assets.getText('apnProdKey.pem'),
         },
-        production: true, // use production server or sandbox
+        fcm: {
+            serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
+        },
+        production: true, // use production server or sandbox (relevant for APNS only, not Android/Firebase)
     });  
 ```
 
@@ -127,6 +135,7 @@ If you want to use the Push.Configure on the client use the options described [h
     Push.Configure({
         gcm: {
             // Required for Android and Chrome OS
+            // Note: with recent version of FCM, configuring this is not required.
             projectNumber: 'xxxxxxxxxxxxxxxxxx'
         },
         apn: {

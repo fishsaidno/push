@@ -6,6 +6,7 @@ This is an example of how `raix:push` works at a minimal level.
 Depending on the platforms you want to work with you will need some credentials or certificates.
 * [Android](ANDROID.md)
 * [iOS](IOS.md)
+* [Firebase Cloud Messaging (Android & iOS)](FIREBASE.md)
 
 ## Config
 Use the `Push.Configure` function on client and server.
@@ -13,21 +14,32 @@ Use the `Push.Configure` function on client and server.
 On the client
 ```js
 Push.Configure({
-  android: {
-    senderID: 12341234,
-    alert: true,
-    badge: true,
-    sound: true,
-    vibrate: true,
-    clearNotifications: true
-    // icon: '',
-    // iconColor: ''
+  cordovaOptions: {
+    // Options in here are passed to cordova-plugin-push, see the full API reference: https://github.com/havesource/cordova-plugin-push/blob/master/docs/API.md#pushnotificationinitoptions
+    android: {
+      // senderID: 12341234,
+      sound: true,
+      vibrate: true,
+      clearBadge: false,
+      clearNotifications: true,
+      forceShow: false
+      // icon: '',
+      // iconColor: ''
+    },
+    ios: {
+      // voip: false,
+      alert: true,
+      badge: true,
+      sound: true,
+      clearBadge: false,
+      // categories: {},
+      // fcmSandbox: false, // Doesn't need to be set if using FCM for iOS with 'APNs Authentication Key' instead of 'APNs Certificates'
+      // topics: []
+
+      critical: true, // Needs to be set to request critical / time-sensitive permissions
+    }
   },
-  ios: {
-    alert: true,
-    badge: true,
-    sound: true
-  }
+  appName: 'MyAppName'
 });
 ```
 
@@ -38,6 +50,7 @@ App.configurePlugin('phonegap-plugin-push', {
 });
 ```
 *This is due to changes in the cordova plugin it self*
+**Note:** with recent version of FCM, configuring SENDER_ID is not required. Instead you use the `google-services.json` file. Check the [Firebase Docs](docs/FIREBASE.md) for more.
 
 Server:
 ```js
@@ -51,7 +64,10 @@ Push.Configure({
   },
   gcm: {
     apiKey: 'xxxxxxx',
-  }
+  },
+  fcm: {
+    serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
+  },
   // production: true,
   // 'sound' true,
   // 'badge' true,

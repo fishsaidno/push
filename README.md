@@ -1,5 +1,3 @@
-# DEPRECATED: This package is no longer maintained
-
 <img alt="Gi-SoftWare" src="https://raw.githubusercontent.com/raix/push/master/docs/logo.png" width="20%" height="20%">
 
 raix:push Push notifications
@@ -12,6 +10,7 @@ raix:push Push notifications
 Status:
 * [x] APN iOS
 * [x] GCM/FCM Android
+* [x] FCM (Android & iOS)
 * [x] APN Safari web push (partially implemented)
 * [x] GCM Chrome OS (partially implemented)
 * [x] Firefox OS (partially implemented)
@@ -25,104 +24,16 @@ Status:
 
 We are using [semantic-release](https://github.com/semantic-release/semantic-release) following the [AngularJS Commit Message Conventions](https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit) - Following this pattern will result in better versioning, better changelog and shorter release cycle.
 
-## Updates For Android 8.0
-
-Meteor must be version 1.6.1 
-
-Cordova Android must be version 6.3.0
-Cordova IOS must be version 4.5.0
-
-Meteor release 1.6.1 https://docs.meteor.com/changelog.html#changes-10
-"The cordova-lib package has been updated to version 7.1.0, cordova-android has been updated to version 6.4.0 (plus one additional commit), and cordova-ios has been updated to version 4.5.4"
-
-To verify the correct installation ADD phonegap-plugin-push@2.1.2 to your cordova plugins file.
-
-After your app builds, Make the following changes to your build.gradle file. The simpliest solution to modify this file is in android studio. 
-
-The correct gradle file to modify has this line at the begining of the file:
-
-apply plugin: 'com.android.application'
-
-Add this two your dependencies:
-
-```js
-classpath 'com.google.gms:google-services:4.1.0' // I added both of these
-classpath 'com.google.firebase:firebase-core:11.0.1' // I added both of these
-```
-At the end of your build.gradle file add:
-
-```js
-apply plugin: 'com.google.gms.google-services'
-```
-In case your run into errors with conflicting google libraries add:
-
-```js
-configurations.all {
-  resolutionStrategy {
-    force 'com.android.support:support-v4:27.1.0'
-  }
-}
-
-configurations {
-  all*.exclude group: 'com.android.support', module: 'support-v13'
-}
-```
-Other errors refer to:
-
-https://github.com/phonegap/phonegap-plugin-push/blob/master/docs/INSTALLATION.md#co-existing-with-plugins-that-use-firebase
-
-
-Changes for the API:
-On the client make sure you add a android channel:
-
-```js
-PushNotification.createChannel(
-    () => {
-        console.log('createChannel');
-    },
-    () => {
-        console.log('error');
-    },
-    {
-       id: Meteor.userId(), //Use any Id you prefer, but the same Id for this channel must be sent from the server, 
-       description: 'Android Channel', //And any description your prefer
-       importance: 3,
-       vibration: true
-      }
-);
-```
-
-Server changes:
-Add the android_channel_id so the Push message like below:
-
-```js
-Push.send({
-	  from: 'test',
-	  title: 'test',
-	   text: 'hello',
-          android_channel_id:this.userId,		//The android channel should match the id on the client
-          query: {
-              userId: this.userId
-          }, 
-          gcm: {
-            style: 'inbox',
-            summaryText: 'There are %n% notifications'
-          },          
-});  
-```
-
 ## Install
 ```bash
   $ meteor add raix:push
-  $ meteor add cordova:cordova-plugin-device@1.1.5
-  $ meteor add cordova:phonegap-plugin-push@1.5.2
-  # Note: you probably want to adjust the version numbers to the latest versions of the packages
 ```
 
 ## Getting started
 Depending on the platforms you want to work with you will need some credentials or certificates.
 * [Android](docs/ANDROID.md)
 * [iOS](docs/IOS.md)
+* [Firebase Cloud Messaging (Android & iOS)](docs/FIREBASE.md)
 
 Have a look at the [Basic example](docs/BASIC.md)
 
@@ -136,7 +47,7 @@ Or check out the [DEMO](https://github.com/elvismercado/meteor-raix-push-demo) b
 Example code for [sound](https://github.com/raix/push/issues/9#issuecomment-216068188) *(todo: add in docs)*
 
 Note:
-Version 3 uses the cordova npm plugin [phonegap-plugin-push](https://github.com/phonegap/phonegap-plugin-push#pushnotificationinitoptions)
+Version 3+ uses the cordova npm plugin ~~[phonegap-plugin-push](https://github.com/phonegap/phonegap-plugin-push#pushnotificationinitoptions)~~ [cordova-plugin-push](https://github.com/havesource/cordova-plugin-push/)
 
 Note:
 Some of the documentation is outdated, please file an issue or create a pull request - same if you find a bug or want to add tests
@@ -153,24 +64,60 @@ Use the `Push.Configure` function on client and server.
 For example in `Meteor.startup()` block of main.js
 
 ```js
+// Android 26 requires you to use notification channels, cordova-plugin-push creates a default channel with id 'PushPluginChannel'
+// Changes to the default notification channel need to be made before calling Push.Configure (see below)
+if (Meteor.isCordova){
+  PushNotification.createChannel(
+    function(){
+      console.log('Channel Created!');
+    },
+    function(){
+      console.log('Channel not created :(');
+    },
+    {
+      id: 'PushPluginChannel',
+      description: 'Channel Name Shown To Users',
+      importance: 3,
+      vibration: true
+    }
+  );
+}
+
 Push.Configure({
-  android: {
-    senderID: 12341234,
-    alert: true,
-    badge: true,
-    sound: true,
-    vibrate: true,
-    clearNotifications: true
-    // icon: '',
-    // iconColor: ''
+  cordovaOptions: {
+    // Options in here are passed to cordova-plugin-push, see the full API reference: https://github.com/havesource/cordova-plugin-push/blob/master/docs/API.md#pushnotificationinitoptions
+    android: {
+      // senderID: 12341234,
+      sound: true,
+      vibrate: true,
+      clearBadge: false,
+      clearNotifications: true,
+      forceShow: false
+      // icon: '',
+      // iconColor: ''
+    },
+    ios: {
+      // voip: false,
+      alert: true,
+      badge: true,
+      sound: true,
+      clearBadge: false,
+      // categories: {},
+      // fcmSandbox: false, // Doesn't need to be set if using FCM for iOS with 'APNs Authentication Key' instead of 'APNs Certificates'
+      // topics: []
+
+      critical: true, // Needs to be set to request critical / time-sensitive permissions
+    }
   },
-  ios: {
-    alert: true,
-    badge: true,
-    sound: true
-  }
+  appName: 'MyAppName'
 });
 ```
+
+Notes: 
+* The `PushNotification` variable is made available by cordova-plugin-push.  
+* This plugin calls PushNotification.init for you and saves the returned instance to `Push.push`, so you can access it.  
+* See [here](https://github.com/havesource/cordova-plugin-push/blob/master/docs/API.md) for the full PushNotification (cordova-plugin-push) API reference.  
+* Badge numbers actually can be set on some Android devices, the Push.setBadge function just hasn't be updated to reflect this. For example you could call `Push.push.setApplicationIconBadgeNumber()` directly.  
 
 Additionally you have to touch `mobile-config.js`
 ```js
@@ -178,7 +125,8 @@ App.configurePlugin('phonegap-plugin-push', {
   SENDER_ID: 12341234
 });
 ```
-*This is due to changes in the cordova plugin itself*
+*This is due to changes in the cordova plugin itself*  
+**Note:** with recent version of FCM, configuring SENDER_ID is not required. Instead you use the `google-services.json` file. Check the [Firebase Docs](docs/FIREBASE.md) for more.
 
 ### Server
 
@@ -195,7 +143,10 @@ Push.Configure({
   },
   gcm: {
     apiKey: 'xxxxxxx',  // GCM/FCM server key
-  }
+  },
+  fcm: {
+    serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
+  },
   // production: true,
   // 'sound' true,
   // 'badge' true,
@@ -204,7 +155,6 @@ Push.Configure({
   // 'sendInterval': 15000, Configurable interval between sending
   // 'sendBatchSize': 1, Configurable number of notifications to send per batch
   // 'keepNotifications': false,
-//
 });
 ```
 *Note: `config.push.json` is deprecating*
@@ -218,6 +168,10 @@ Push.Configure({
         title: 'Hello',
         text: 'world',
         badge: 1, //optional, use it to set badge count of the receiver when the app is in background.
+        // sound: '',
+        androidChannelId: '', // If not specified will go to the default cordova-plugin-push channel
+        androidPriority: 1, // Optional: // PRIORITY_MIN -2 // PRIORITY_LOW -1 // PRIORITY_DEFAULT 0 // PRIORITY_HIGH 1 // PRIORITY_MAX 2 //
+        iosPriority: 'time-sensitive', // Optional: The string values passive, active, time-sensitive, or critical (default is active)
         query: {
             // Ex. send to a specific user if using accounts:
             userId: 'xxxxxxxxx'
