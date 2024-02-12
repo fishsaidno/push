@@ -10,7 +10,7 @@ raix:push Push notifications
 Status:
 * [x] APN iOS
 * [x] GCM/FCM Android
-* [x] FCM (Android & iOS)
+* [x] [Firebase Cloud Messaging (Android & iOS)](docs/FIREBASE.md)
 * [x] APN Safari web push (partially implemented)
 * [x] GCM Chrome OS (partially implemented)
 * [x] Firefox OS (partially implemented)
@@ -23,6 +23,9 @@ Status:
 ## Contributing
 
 We are using [semantic-release](https://github.com/semantic-release/semantic-release) following the [AngularJS Commit Message Conventions](https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit) - Following this pattern will result in better versioning, better changelog and shorter release cycle.
+
+## Requirements
+As of v5.0.0 of this package, Meteor v2.14+ is required (for Cordova compatibility).  
 
 ## Install
 ```bash

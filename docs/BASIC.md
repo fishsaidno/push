@@ -49,8 +49,8 @@ App.configurePlugin('phonegap-plugin-push', {
   SENDER_ID: 12341234
 });
 ```
-*This is due to changes in the cordova plugin it self*
-**Note:** with recent version of FCM, configuring SENDER_ID is not required. Instead you use the `google-services.json` file. Check the [Firebase Docs](docs/FIREBASE.md) for more.
+*This is due to changes in the cordova plugin it self*  
+**Note:** with recent version of FCM, configuring SENDER_ID is not required. Instead you use the `google-services.json` file. Check the [Firebase Docs](docs/FIREBASE.md) for more.  
 
 Server:
 ```js

@@ -3,7 +3,7 @@ Firebase Guide (Android & iOS)
 
 ## Background
 These changes introduce a new token type `{ fcm: <token> }`. Only tokens keyed with fcm will be handled by these changes.  
-You can continue using apn and gcm tokens and they will be handled as before.  
+You can continue using apn and gcm keyed tokens and they will be handled as before.  
 
 You can send notifications for both Android and iOS via FCM (for iOS, Firebase handles sending the notifications to APNS for you). 
 You can also continue sending notifications for iOS using APNS directly, using the existing apn/ios functionality of this package.
@@ -12,16 +12,16 @@ You can also continue sending notifications for iOS using APNS directly, using t
 
 See the cordova-plugin-push installation docs for full details and other particulars https://github.com/havesource/cordova-plugin-push/blob/master/docs/INSTALLATION.md  
 Such as how to include your `google-services.json` for sending to Android devices and `GoogleService-Info.plist` if you wish to send to iOS with Firebase.  
-FCM messages are sent using the firebase-admin npm package and requires you to authenticate with a service account.
+FCM messages are sent using the firebase-admin npm package and this requires you to authenticate with a service account.
 
 * Go to https://console.firebase.google.com/ and create a project (you can choose to add Firebase to an existing Google Cloud project).
 * In the project settings, add your apps by their bundle IDs.
 * For iOS apps, generate an APNs Authentication Key for your Apple developer account (the key is valid for all apps under the account), here: https://developer.apple.com/account/resources/authkeys/list
-* For iOS apps, go to the Cloud Messaging tab of the Firebase project settings and add you APNs Authentication Key for your Apple developer account. You could alternativley use APNs certificates, however it is **strongly** recommended to use a key instead.
+* For iOS apps, go to the Cloud Messaging tab of the Firebase project settings and add your APNs Authentication Key for your Apple developer account. You could alternatively use APNs certificates, however it is **strongly** recommended to use a key instead.
 * On the Firebase project settings page, download the `Google-Service-Info.plist` for *each* iOS app and the `google-services.json` for Android.
 * In the service accounts tab, generate and download a service account key (JSON file).
 
-Ensure these files are added to the Cordova project's config.xml, using Meteor's mobile-config.js, somehting like the below:
+Ensure these files are added to the Cordova project's config.xml, using Meteor's mobile-config.js, eg: 
 ```js
 var googleServiceInfoPlistFileName = 'ProductionApp-GoogleService-Info.plist'; // change this as per the app bundle ID, eg. for production/beta/development etc.
 App.addResourceFile('./resources/'+googleServiceInfoPlistFileName, 'GoogleService-Info.plist', 'ios');
@@ -77,7 +77,7 @@ Push.send({
     gcm: {}, // unchanged
     fcm: {
         // Optional: use this to override / have full control of the message object sent to FCM.
-        // If you omit the fcm object (or any of it's subkeys), the plugin will correctly poulate/complete it with the top-level fields you specify (in push.api.js), 
+        // If you omit the fcm object (or any of it's subkeys), the package will correctly poulate/complete it with the top-level fields you specify, 
         // e.g. these top-level fields will be used to populate relevant fcm fields: 'title','text','badge','sound','notId','contentAvailable','androidChannelId','androidPriority','iosPriority','payload'
 
         // field reference - see: https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages

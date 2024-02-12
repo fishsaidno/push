@@ -2,6 +2,29 @@
 
 ## vCurrent
 
+## [v5.0.0] (https://github.com/Meteor-Community-Packages/raix-push/tree/v5.0.0)
+#### 11/02/24 by [FishSaidNo](https://github.com/fishsaidno)
+- This package was **UN**-deprecated
+
+- [FCM Firebase Cloud Messaging support for both Android & iOS.](docs/FIREBASE.md) New token type `{ fcm: <token> }`
+
+- BREAKING CHANGE: Meteor v2.14 is required (for Cordova compatibility)
+
+- BREAKING CHANGE: `Push.Configure` on the client now takes a `cordovaOptions` argument for configuration which is passed directly to cordova-plugin-push
+
+- BREAKING CHANGE: The `Push.send` argument `android_channel_id` has been renamed `androidChannelId` for consistency with other package argument names
+
+- Swapped out [phonegap-plugin-push](https://github.com/phonegap/phonegap-plugin-push) (deprecated) for [@havesource/cordova-plugin-push](https://github.com/havesource/cordova-plugin-push)
+
+- Added direct support for NotificationPriority / NotificationInterruptionLevel for Android and iOS respectively when sending via FCM, with the `androidPriority` and `iosPriority` arguments
+
+- Bumped `cordova-plugin-device` to v2.1.0 (previously 2.0.2)
+
+## v4.0.0
+#### 08/08/20
+- This package was deprecated
+
+## Version(s) Unknown
 - support lookup by userid to prevent duplicate records for same user
 
 - add-support-to-title-in-ios
