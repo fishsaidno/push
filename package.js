@@ -48,7 +48,7 @@ Package.onUse(function(api) {
   ], ['client', 'server'], { weak: true });
 
   api.use([
-    'raix:eventstate@0.0.5',
+    'raix:eventstate@=0.0.5', // Need to force v0.0.5 as the latest published v0.0.6 is deprecated and all the package's code has been deleted in that version
     'check',
     'mongo',
     'underscore',
