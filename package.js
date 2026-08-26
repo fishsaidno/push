@@ -14,8 +14,8 @@ Npm.depends({
 
 Cordova.depends({
   // 'phonegap-plugin-push': '2.2.3',  // previously 1.9.0
-  '@havesource/cordova-plugin-push': '4.0.0',
-  'cordova-plugin-device': '2.1.0' // previously 2.0.2
+  '@havesource/cordova-plugin-push': '7.0.0', // previously 4.0.0
+  'cordova-plugin-device': '3.0.0', // previously 2.1.0
 });
 
 Package.onUse(function(api) {
