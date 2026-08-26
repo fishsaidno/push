@@ -1,7 +1,7 @@
 Package.describe({
   name: 'raix:push',
-  version: '0.0.0-semantic-release',
-  summary: 'Isomorphic Push notifications for APN and GCM',
+  version: '6.0.0',
+  summary: 'Push notifications for Meteor, Cordova, APN and FCM',
   git: 'https://github.com/raix/push.git',
   // deprecated: true
 });
@@ -9,7 +9,6 @@ Package.describe({
 // Server-side push deps
 Npm.depends({
   'apn' : '1.6.2', // '1.7.4', // working: 1.6.2
-  'node-gcm' : '0.14.4', // previously: 0.9.6
   'firebase-admin': '12.0.0' // previously 6.1.0
 });
 
@@ -19,23 +18,10 @@ Cordova.depends({
   'cordova-plugin-device': '2.1.0' // previously 2.0.2
 });
 
-Package.registerBuildPlugin({
-  name: 'configuration',
-  use: [
-    'check'
-  ],
-  sources: [
-    'plugin/push.configuration.js'
-  ],
-  npmDependencies: {
-    'strip-json-comments': '1.0.4'
-  }
-});
-
 Package.onUse(function(api) {
   // api.versionsFrom('1.2');
-  api.versionsFrom('2.14'); // Meteor 2.14 required for compatibility with Cordova dependencies
-  api.use(['ecmascript']);
+  api.versionsFrom(['2.14', '3.0']); // Meteor 2.14 required for compatibility with Cordova dependencies
+  api.use(['ecmascript', 'meteor']);
 
 
   api.use([
@@ -48,15 +34,17 @@ Package.onUse(function(api) {
   ], ['client', 'server'], { weak: true });
 
   api.use([
-    'raix:eventstate@=0.0.5', // Need to force v0.0.5 as the latest published v0.0.6 is deprecated and all the package's code has been deleted in that version
     'check',
     'mongo',
     'underscore',
     'ejson',
-    'random',   // The push it is created with Random.id()
+    'random',   // The push id is created with Random.id()
   ], ['client', 'server']);
 
   api.use('mongo', 'server');
+
+  // Internal event/state implementation shared by all architectures
+  api.addFiles('lib/common/event-state.js', ['client', 'server']);
 
   // API
   api.addFiles('lib/client/cordova.js', 'web.cordova');

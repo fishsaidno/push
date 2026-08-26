@@ -87,10 +87,6 @@ Push.send({
           android_channel_id:this.userId,		//The android channel should match the id on the client
           query: {
               userId: this.userId
-          }, 
-          gcm: {
-            style: 'inbox',
-            summaryText: 'There are %n% notifications'
-          },          
+          }
 });  
 ```

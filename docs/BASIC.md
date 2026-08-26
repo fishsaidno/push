@@ -54,38 +54,34 @@ App.configurePlugin('phonegap-plugin-push', {
 
 Server:
 ```js
-Push.Configure({
-  apn: {
-    certData: Assets.getText('apnDevCert.pem'),
-    keyData: Assets.getText('apnDevKey.pem'),
-    passphrase: 'xxxxxxxxx',
-    production: true,
-    //gateway: 'gateway.push.apple.com',
-  },
-  gcm: {
-    apiKey: 'xxxxxxx',
-  },
-  fcm: {
-    serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
-  },
-  // production: true,
-  // 'sound' true,
-  // 'badge' true,
-  // 'alert' true,
-  // 'vibrate' true,
-  // 'sendInterval': 15000, Configurable interval between sending
-  // 'sendBatchSize': 1, Configurable number of notifications to send per batch
-  // 'keepNotifications': false,
-//
+Meteor.startup(async function() {
+  Push.Configure({
+    apn: {
+      certData: await Assets.getTextAsync('apnDevCert.pem'),
+      keyData: await Assets.getTextAsync('apnDevKey.pem'),
+      passphrase: 'xxxxxxxxx',
+      production: true,
+      //gateway: 'gateway.push.apple.com',
+    },
+    fcm: {
+      serviceAccountJson: JSON.parse(await Assets.getTextAsync('FirebaseAdminSdkServiceAccountKey.json')) // File located in the /private directory
+    },
+    // production: true,
+    // 'sound' true,
+    // 'badge' true,
+    // 'alert' true,
+    // 'vibrate' true,
+    // 'sendInterval': 15000, Configurable interval between sending
+    // 'sendBatchSize': 1, Configurable number of notifications to send per batch
+    // 'keepNotifications': false,
+  });
 });
 ```
-*Note: `config.push.json` is deprecating*
-
 ## Test
 You can send push notifications to all users from client and server - Use browser console or Meteor shell:
 
 ```js
-Push.send({
+await Push.send({
   from: 'Test',
   title: 'Hello',
   text: 'World',

@@ -13,7 +13,7 @@ Client:
 ```js
     // Internal events
     Push.addListener('token', function(token) {
-        // Token is { apn: 'xxxx' } or { gcm: 'xxxx' }
+        // Token is { apn: 'xxxx' } or { fcm: 'xxxx' }
     });
 
     Push.addListener('error', function(err) {
@@ -68,76 +68,40 @@ var notification = {
 
 Event types:
 * `apn.cordova`
-* `gcm.cordova`
+* `fcm.cordova`
 * `apn.browser`
-* `gcm.browser`
 * `cordova.browser`
 
 ## Setting credentials / certificates
 
-This can be done via:
-* In `config.push.json` file
-* In client/server code
-
-### Config
-
-NOTE: `config.push.json` is being deprecated and might not work in Meteor 1.3
-
-Add a `config.push.json` file in your project and configure credentials / keys / certificates:
-
-```js
-{
-  "apn": {
-    "passphrase": "xxxxxxxxx",  
-    "key": "apnProdKey.pem",
-    "cert": "apnProdCert.pem"
-  },
-  "gcm": {
-    "apiKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    "projectNumber": xxxxxxxxxxxx
-  },
-  "production": true,
-  // "badge": true,
-  // "sound": true,
-  // "alert": true,
-  // "vibrate": true,
-  // "sendInterval": 15000,  Configurable interval between sending notifications
-  // "sendBatchSize": 1  Configurable number of notifications to send per batch
-}
-```
+Configure credentials directly in server code with `Push.Configure`.
 
 ### Server api
-Please note that `Push.Configure` is called automatically when using the `config.push.json` file. `Push.Configure` may only be called once otherwise it throws an error - this is intended behaviour.
+`Push.Configure` may only be called once; subsequent calls throw an error.
 
 If you want to use the Push.Configure on the client use the options described [here](https://github.com/phonegap/phonegap-plugin-push#pushnotificationinitoptions)
 ```js
+Meteor.startup(async function() {
     Push.Configure({
-        gcm: {
-            apiKey: 'xxxxxxxxxxxxx'
-        },
         apn: {
             // setting this on client throws security error
             passphrase: 'xxx',
             // pem files are placed in the app private folder
-            certData: Assets.getText('apnProdCert.pem'),
-            keyData: Assets.getText('apnProdKey.pem'),
+            certData: await Assets.getTextAsync('apnProdCert.pem'),
+            keyData: await Assets.getTextAsync('apnProdKey.pem'),
         },
         fcm: {
-            serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
+            serviceAccountJson: JSON.parse(await Assets.getTextAsync('FirebaseAdminSdkServiceAccountKey.json')) // File located in the /private directory
         },
         production: true, // use production server or sandbox (relevant for APNS only, not Android/Firebase)
-    });  
+    });
+});
 ```
 
 ### Client api
 ```js
     // Common client api
     Push.Configure({
-        gcm: {
-            // Required for Android and Chrome OS
-            // Note: with recent version of FCM, configuring this is not required.
-            projectNumber: 'xxxxxxxxxxxxxxxxxx'
-        },
         apn: {
             // Only required if using safari web push, not required
             // for iOS / cordova
@@ -158,36 +122,38 @@ If you want to use the Push.Configure on the client use the options described [h
 ```js
     // Internal events
     Push.addListener('token', function(currentToken, newToken) {
-        // Token is { apn: 'xxxx' } or { gcm: 'xxxx' } or null
+        // Token is { apn: 'xxxx' } or { fcm: 'xxxx' } or null
         // if newToken is null then the currentToken is invalid
         // if newToken is set then this should replace the currentToken
     });
 
     // Direct access to the send functions
     Push.sendAPN(userToken, options);
-    Push.sendGCM(userTokens, options)
+    Push.sendFCM(userToken, options);
 ```
 
 ### Send API
 
 You can send push notifications from the client or the server using Push.send(). If sending from the client you are required to use [allow/deny](ADVANCED.md#client-security)) rules.
 
+On the server, `Push.send()` returns a promise for the queued notification ID and must be awaited. Client-side sends remain synchronous.
+
 There are 4 required parameters that must be passed to `Push.send`. They are:
-* `from` : reserved for future use. intended to be internally used by gcm to generate a collapse key. this can be any random string at the moment
+* `from` : reserved for future use; this can be any string at the moment
 * `title` : the bold title text that is displayed in the notification
 * `text` : the normal sub-text that is displayed in the notification
 * a selection query from below
 
 The 4th parameter is a selection query for determining who the message should be sent to. This query can be one of the three following items:
 * `query` : {} or {userId : 'XXXXX'} or {id : 'XXXXX'}
-* `token` : {gcm : 'XXXXXX'} or {apn : 'XXXXX'}
-* `tokens` : [{gcm : 'XXXXX0'},{gcm : 'XXXXX1'}, {apn : 'XXXXX0'}]
+* `token` : {fcm : 'XXXXXX'} or {apn : 'XXXXX'}
+* `tokens` : [{fcm : 'XXXXX0'},{fcm : 'XXXXX1'}, {apn : 'XXXXX0'}]
 
 `query` can be left empty in which case the notification will be sent to all devices that have registered a token. `query` can also be one or more ids obtained from clients via `Push.id()` or one or more userIds associated with the accounts-base package and Meteor.userId().
 
-`token` is an apn or gcm token registered by the device in the form:
+`token` is an APN or FCM token registered by the device in the form:
 ```js
-{ apn: String } or { gcm: String }
+{ apn: String } or { fcm: String }
 ```
 
 `tokens` is simply and array of tokens from the previous example
@@ -209,109 +175,11 @@ Push.send({
 });
 ```
 #### Display multiple notifications on Android
- * `notId` : a unique identifier for a GCM message
+ * `notId` : a unique identifier for an Android notification
 
-'notId' supplies a unique id to Cordova Push plugin for 'tag' field in GCM (Android) allowing a per message id, this can be used to replace unread message on both server and client. It differs from collapseKey which only collapses undelivered messages server side. Defaults to a value of zero, must be 32 bit Integer
+'notId' supplies a unique id to the Cordova Push plugin for the Android `tag` field, allowing a per-message id. This can be used to replace an unread message on both server and client. It differs from collapseKey, which only collapses undelivered messages server-side. It defaults to zero and must be a 32-bit integer.
 If `notId` is not set then the Push plugin defaults to a value of 0 causing each message to overwrite the previous and only ever display a single notification.
 
-#### Overwriting platform specific values
-If needed it's possible to specify values pr. platform `apn`/`gcm` in the send.
-Eg.:
-```js
-Push.send({
-  from: 'Test',
-  title: 'Hello',
-  text: 'World',
-  apn: {
-    // apn specific overwrites
-    title: 'sent via apn'
-  },
-  gcm: {
-    // gcm specific overwrites
-    title: 'sent via gcm'
-  },
-  query: {}
-  token: {}
-  tokens: [{},{}]
-  delayUntil: new Date()
-});
-```
-*You can overwrite keys: 'from','title','text','badge','sound' and 'notId'*
-
-### Android image in notifications
-
-```js
-Push.send({
-  from: 'Test',
-  title: 'Large icon',
-  text: 'Remotely loaded',
-  gcm: {
-    // gcm specific overwrites
-    image: 'https://c1.staticflickr.com/9/8079/8391224056_96da82499d_n.jpg'
-  }
-});
-```
-
-Produces the following result:
-![2015-07-24 02 17 55](https://cloud.githubusercontent.com/assets/353180/8866900/2df0ab06-3190-11e5-9a81-fdb85bb0f5a4.png)
-
-### Android styles
-
-#### Inbox style
-
-First notification:
-
-```js
-Push.send({
-  from: 'Test',
-  title: 'My Title',
-  text: 'My first message',
-  gcm: {
-    style: 'inbox',
-    summaryText: 'There are %n% notifications'
-  }
-});
-```
-
-Produces the following result:
-![first message](https://cloud.githubusercontent.com/assets/353180/9468840/c9c5d43a-4b11-11e5-814f-8dc995f47830.png)
-
-Second notification:
-
-```js
-Push.send({
-  from: 'Test',
-  title: 'My Title',
-  text: 'My second message',
-  gcm: {
-    style: 'inbox',
-    summaryText: 'There are %n% notifications'
-  }
-});
-```
-
-Produces the following result:
-![second message](https://cloud.githubusercontent.com/assets/353180/9468727/2d658bee-4b11-11e5-90fa-248d54c8f3f6.png)
-
-#### Picture Messages
-
-To include a large picture in the notification:
-
-```js
-Push.send({
-  from: 'Test',
-  title: 'Big Picture',
-  text: 'This is my big picture message',
-  gcm: {
-    style: 'picture',
-    picture: 'http://36.media.tumblr.com/c066cc2238103856c9ac506faa6f3bc2/tumblr_nmstmqtuo81tssmyno1_1280.jpg',
-    summaryText: 'The internet is built on cat pictures'
-  }
-});
-```
-
-Produces the following result:
-![picture message](https://cloud.githubusercontent.com/assets/353180/9472260/3655fa7a-4b22-11e5-8d87-20528112de16.png)
 
 ### Client Security
 This package allows you to send notifications from the server and client. To restrict the client or allowing the client to send use `allow` or `deny` rules.
@@ -355,7 +223,7 @@ Notification.snoozeAction1Day = function(data) {
 Notification.closeAlert = function() {};
 ```
 
-If you wish to include an icon along with the button name, they must be placed in the `res/drawable` directory of your Android project. Then you can send the following JSON from GCM/FCM:
+If you wish to include an icon along with the button name, they must be placed in the `res/drawable` directory of your Android project. Then you can send the following JSON through FCM:
 
 ```json
 {
@@ -457,13 +325,11 @@ Push.send({
   "title": "Test Notification for Force Start",
   "text": "This will forcestart your app.",
   "badge": 1,
+  "sound": "testApp",
   "notId": 123456,
   "query": {},
   "apn": {
     "sound": "www/application/app/testApp.wav"
-  },
-  "gcm": {
-    "sound": "testApp"
   },
   "forceStart": 1
 });

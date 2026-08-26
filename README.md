@@ -3,16 +3,14 @@
 raix:push Push notifications
 ============================
 [![Build Status](https://travis-ci.org/raix/push.svg?branch=master)](https://travis-ci.org/raix/push)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 > Push notifications for cordova (ios, android) browser (Chrome, Safari, Firefox) - One unified api on client and server.
 
 Status:
 * [x] APN iOS
-* [x] GCM/FCM Android
+* [x] FCM Android
 * [x] [Firebase Cloud Messaging (Android & iOS)](docs/FIREBASE.md)
 * [x] APN Safari web push (partially implemented)
-* [x] GCM Chrome OS (partially implemented)
 * [x] Firefox OS (partially implemented)
 * [ ] BPS Blackberry 10
 * [ ] MPNS Windows phone 8
@@ -20,12 +18,8 @@ Status:
 * [ ] ADM Amazon Fire OS
 * [ ] Meteor in app notifications
 
-## Contributing
-
-We are using [semantic-release](https://github.com/semantic-release/semantic-release) following the [AngularJS Commit Message Conventions](https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit) - Following this pattern will result in better versioning, better changelog and shorter release cycle.
-
 ## Requirements
-As of v5.0.0 of this package, Meteor v2.14+ is required (for Cordova compatibility).  
+Meteor v2.14+ is required for Cordova compatibility. The package also supports Meteor 3.x; server-side calls that write to Mongo return promises and must be awaited.
 
 ## Install
 ```bash
@@ -45,7 +39,6 @@ Theres a good walkthrough by [Arthur Carabott](https://medium.com/@acarabott/met
 Read the [raix:push Newbie Manual](https://github.com/raix/push/wiki/raix:push-Newbie-Manual) by [@harryward](https://github.com/harryward)
 
 Or check out the [DEMO](https://github.com/elvismercado/meteor-raix-push-demo) by [@elvismercado](https://github.com/elvismercado)
-(This example uses the deprecated config.push.json)
 
 Example code for [sound](https://github.com/raix/push/issues/9#issuecomment-216068188) *(todo: add in docs)*
 
@@ -133,40 +126,39 @@ App.configurePlugin('phonegap-plugin-push', {
 
 ### Server
 
-For example in `Meteor.startup()` block of main.js
+For example in an async `Meteor.startup()` block in main.js:
 
 ```js
-Push.Configure({
-  apn: {
-    certData: Assets.getText('apnDevCert.pem'),
-    keyData: Assets.getText('apnDevKey.pem'),
-    passphrase: 'xxxxxxxxx',
-    production: true,
-    //gateway: 'gateway.push.apple.com',
-  },
-  gcm: {
-    apiKey: 'xxxxxxx',  // GCM/FCM server key
-  },
-  fcm: {
-    serviceAccountJson: JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
-  },
-  // production: true,
-  // 'sound' true,
-  // 'badge' true,
-  // 'alert' true,
-  // 'vibrate' true,
-  // 'sendInterval': 15000, Configurable interval between sending
-  // 'sendBatchSize': 1, Configurable number of notifications to send per batch
-  // 'keepNotifications': false,
+Meteor.startup(async function() {
+  Push.Configure({
+    apn: {
+      certData: await Assets.getTextAsync('apnDevCert.pem'),
+      keyData: await Assets.getTextAsync('apnDevKey.pem'),
+      passphrase: 'xxxxxxxxx',
+      production: true,
+      //gateway: 'gateway.push.apple.com',
+    },
+    fcm: {
+      serviceAccountJson: JSON.parse(await Assets.getTextAsync('FirebaseAdminSdkServiceAccountKey.json')) // File located in the /private directory
+    },
+    // production: true,
+    // 'sound' true,
+    // 'badge' true,
+    // 'alert' true,
+    // 'vibrate' true,
+    // 'sendInterval': 15000, Configurable interval between sending
+    // 'sendBatchSize': 1, Configurable number of notifications to send per batch
+    // 'keepNotifications': false,
+  });
 });
 ```
-*Note: `config.push.json` is deprecating*
-
 ## Common API
+On the server, await `Push.send()` to receive the queued notification ID and handle insertion errors. Client-side sends retain their synchronous Minimongo behaviour.
+
 ```js
     // Push.debug = true; // Add verbosity
 
-    Push.send({
+    await Push.send({
         from: 'push',
         title: 'Hello',
         text: 'world',
@@ -226,7 +218,7 @@ Stores a token associated with an application and optionally, a userId.
 
 *options* - An object containing the necessary data to store a token. Fields:
 * `id` - String (optional) - a record id for the Application/Token document to update. If this does not exist, will return 404.
-* `token` - Object - `{ apn: 'TOKEN' }` or `{ gcm: 'TOKEN' }`
+* `token` - Object - `{ apn: 'TOKEN' }` or `{ fcm: 'TOKEN' }`
 * `appName` - String - the name of the application to associate the token with
 * `userId` - String (optional) - the user id so associate with the token and application. If none is included no user will be associated. Use `raix:push-setuser` to later associate a userId with a token.
 

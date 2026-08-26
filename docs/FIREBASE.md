@@ -2,8 +2,7 @@ Firebase Guide (Android & iOS)
 ===========================
 
 ## Background
-These changes introduce a new token type `{ fcm: <token> }`. Only tokens keyed with fcm will be handled by these changes.  
-You can continue using apn and gcm keyed tokens and they will be handled as before.  
+Firebase tokens use the form `{ fcm: <token> }`. APN tokens continue to use `{ apn: <token> }`.
 
 You can send notifications for both Android and iOS via FCM (for iOS, Firebase handles sending the notifications to APNS for you). 
 You can also continue sending notifications for iOS using APNS directly, using the existing apn/ios functionality of this package.
@@ -32,13 +31,13 @@ App.addResourceFile('./resources/google-services.json', '/app/google-services.js
 
 ### Server api
 ```js
-    const serviceAccountJson = JSON.parse(Assets.getText('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
+Meteor.startup(async function() {
+    const serviceAccountJson = JSON.parse(await Assets.getTextAsync('FirebaseAdminSdkServiceAccountKey.json')); // File located in the /private directory
 
     Push.Configure({
         fcm: {
             serviceAccountJson: serviceAccountJson
         },
-        // gcm: {},
         // apn: {},
         // production: true, // apn production flag (not needed if using fcm for iOS)
         // keepNotifications: true,
@@ -46,6 +45,7 @@ App.addResourceFile('./resources/google-services.json', '/app/google-services.js
         // sendBatchSize: 1000, 
         appName: 'MyAppName'
     });
+});
 ```
 
 ### Client api
@@ -60,7 +60,7 @@ If you plan on using the fcm override, be mindful of various gotchas with the ne
 as some things contradict Google's docs, see: https://github.com/havesource/cordova-plugin-push/blob/master/docs/PAYLOAD.md
 
 ```js
-Push.send({
+await Push.send({
     from: '',
     title: '', 
     text: '',
@@ -74,7 +74,6 @@ Push.send({
     iosPriority: 'time-sensitive', // The string values passive, active, time-sensitive, or critical
 
     apn: {}, // unchanged
-    gcm: {}, // unchanged
     fcm: {
         // Optional: use this to override / have full control of the message object sent to FCM.
         // If you omit the fcm object (or any of it's subkeys), the package will correctly poulate/complete it with the top-level fields you specify, 
@@ -111,4 +110,3 @@ Push.send({
 If you want your Push event handlers to be called when your app is in the background (before the user clicks the notification),  
 have a read of https://github.com/havesource/cordova-plugin-push/blob/master/docs/PAYLOAD.md#background-notifications-1  
 To call the finish function use `Push.push.finish()`  
-

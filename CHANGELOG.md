@@ -2,6 +2,14 @@
 
 ## vCurrent
 
+- Added Meteor 3.x compatibility while retaining Meteor 2.14+ support.
+- Server Mongo operations and push queue processing now use async APIs.
+- FCM sends are awaited before queued notifications are marked as sent.
+- Internalised the event-state implementation and removed the abandoned package dependency.
+- Removed the obsolete GCM transport and its `node-gcm` dependency.
+- Removed the legacy `config.push.json` build plugin.
+- Package versioning is now explicit, beginning with 6.0.0.
+
 ## [v5.0.0] (https://github.com/Meteor-Community-Packages/raix-push/tree/v5.0.0)
 #### 11/02/24 by [FishSaidNo](https://github.com/fishsaidno)
 - This package was **UN**-deprecated
@@ -361,4 +369,3 @@ Patches by GitHub users [@alexcorre](https://github.com/alexcorre), [@funkyeah](
 - working on apn and cgm
 
 - initial commit - WIP
-
